@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini RAG - File Search Assistant</title>
+    <style>
+        /* ==========================================
+           MODERN GEMINI RAG ASSISTANT UI
+           Clean, Professional Design System
+           ========================================== */
+
+        /* === RESET & FOUNDATION === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* === TYPOGRAPHY & GLOBAL STYLES === */
+        body {
+            /* Modern font stack - Inter or Roboto */
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Roboto', 'Segoe UI', sans-serif;
+            /* Softer background with subtle warmth */
+            background: linear-gradient(to bottom, #F9FAFB 0%, #F3F4F6 100%);
+            min-height: 100vh;
+            padding: 32px 20px;
+            color: #111827;
+            line-height: 1.6;
+        }
+
+        /* === LAYOUT CONTAINER === */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* === HEADER SECTION === */
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding: 48px 32px;
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                        0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+
+        header h1 {
+            font-size: 2.75em;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        header p {
+            font-size: 1.15em;
+            color: #6B7280;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* === MAIN GRID LAYOUT === */
+        .main-content {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            margin-bottom: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* === CARD COMPONENTS === */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                        0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #0F766E 0%, #0D9488 50%, #14B8A6 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover {
+            box-shadow: 0 12px 20px -5px rgba(15, 118, 110, 0.1),
+                        0 8px 12px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-3px);
+            border-color: rgba(15, 118, 110, 0.2);
+        }
+
+        .card h2 {
+            color: #0F766E;
+            margin-bottom: 20px;
+            font-size: 1.15em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.4px;
+        }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        /* === STORE INFO SECTION === */
+        .store-info {
+            padding: 16px;
+            background: #F1F5F9;
+            border-radius: 8px;
+            border-left: 4px solid #0F766E;
+        }
+
+        .store-info-item {
+            margin: 10px 0;
+            font-size: 0.9em;
+            color: #334155;
+        }
+
+        .store-info-label {
+            font-weight: 600;
+            color: #0F766E;
+        }
+
+        /* === BUTTONS === */
+        .btn-delete-store {
+            margin-top: 12px;
+            padding: 10px 18px;
+            background: #DC2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            width: 100%;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .btn-delete-store:hover {
+            background: #B91C1C;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(220, 38, 38, 0.15);
+        }
+
+        .btn-delete-store:disabled {
+            background: #94A3B8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            top: 50%;
+            left: 50%;
+            margin-left: -7px;
+            margin-top: -7px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* === UPLOAD SECTION === */
+        .drop-zone {
+            border: 2.5px dashed #0D9488;
+            border-radius: 16px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.05) 0%, rgba(13, 148, 136, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.35s ease;
+        }
+
+        .drop-zone:hover::before {
+            opacity: 1;
+        }
+
+        .drop-zone.dragover {
+            background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+            color: white;
+            border-color: #0D9488;
+            transform: scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(15, 118, 110, 0.25),
+                        0 10px 10px -5px rgba(15, 118, 110, 0.15);
+        }
+
+        .drop-zone-icon {
+            font-size: 3.5em;
+            margin-bottom: 16px;
+            color: #0F766E;
+            transition: transform 0.3s ease;
+        }
+
+        .drop-zone:hover .drop-zone-icon {
+            transform: scale(1.1);
+        }
+
+        .drop-zone.dragover .drop-zone-icon {
+            color: white;
+        }
+
+        .drop-zone p {
+            font-size: 1em;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .drop-zone.dragover p {
+            color: white;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* === UPLOAD STATUS MESSAGES === */
+        .upload-status {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .upload-status.success {
+            background: #D1FAE5;
+            border: 1px solid #A7F3D0;
+            color: #065F46;
+            display: block;
+        }
+
+        .upload-status.error {
+            background: #FEE2E2;
+            border: 1px solid #FECACA;
+            color: #991B1B;
+            display: block;
+        }
+
+        .upload-status.loading {
+            background: #DBEAFE;
+            border: 1px solid #BFDBFE;
+            color: #1E40AF;
+            display: block;
+        }
+
+        /* === METADATA INPUT SECTION === */
+        .metadata-input-section {
+            margin-top: 12px;
+            padding: 12px;
+            background: #F8FAFC;
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .metadata-input-section h3 {
+            font-size: 0.85em;
+            color: #0F766E;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .metadata-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metadata-field {
+            display: flex;
+            gap: 6px;
+        }
+
+        .metadata-field input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            font-size: 0.85em;
+            background: #FFFFFF;
+            transition: border-color 0.2s ease;
+        }
+
+        .metadata-field input:focus {
+            outline: none;
+            border-color: #0F766E;
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+        }
+
+        .metadata-field button {
+            padding: 8px 12px;
+            background: #DC2626;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .metadata-field button:hover {
+            background: #B91C1C;
+        }
+
+        .add-metadata-btn {
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(15, 118, 110, 0.2);
+        }
+
+        .add-metadata-btn:hover {
+            background: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(15, 118, 110, 0.25);
+        }
+
+        /* === ADVANCED OPTIONS SECTION === */
+        .advanced-section {
+            margin-top: 12px;
+            padding: 12px;
+            background: #FEF3C7;
+            border-radius: 8px;
+            border-left: 3px solid #F59E0B;
+        }
+
+        .advanced-toggle {
+            cursor: pointer;
+            color: #92400E;
+            font-weight: 600;
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+        }
+
+        .advanced-toggle:hover {
+            color: #78350F;
+        }
+
+        .advanced-content {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .advanced-content.show {
+            display: block;
+        }
+
+        .chunking-input {
+            margin: 10px 0;
+        }
+
+        .chunking-input label {
+            display: block;
+            font-size: 0.85em;
+            color: #92400E;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .chunking-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #D97706;
+            border-radius: 6px;
+            font-size: 0.85em;
+            background: #FFFFFF;
+        }
+
+        .chunking-input input:focus {
+            outline: none;
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        .chunking-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .chunking-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* === SYSTEM PROMPT SECTION === */
+        .system-prompt-section {
+            margin-top: 12px;
+            padding: 14px;
+            background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+            border-radius: 10px;
+            border-left: 3px solid #9333EA;
+        }
+
+        .system-prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .system-prompt-toggle {
+            cursor: pointer;
+            color: #6B21A8;
+            font-weight: 700;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+
+        .system-prompt-toggle:hover {
+            color: #581C87;
+        }
+
+        .system-prompt-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .system-prompt-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .system-prompt-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #D1D5DB;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .system-prompt-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked + .system-prompt-slider {
+            background: linear-gradient(135deg, #9333EA 0%, #A855F7 100%);
+        }
+
+        input:checked + .system-prompt-slider:before {
+            transform: translateX(20px);
+        }
+
+        .system-prompt-content {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .system-prompt-content.show {
+            display: block;
+        }
+
+        .system-prompt-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #D8B4FE;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.9);
+            resize: vertical;
+            min-height: 80px;
+            transition: all 0.2s ease;
+        }
+
+        .system-prompt-textarea:focus {
+            outline: none;
+            border-color: #9333EA;
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.15);
+            background: #FFFFFF;
+        }
+
+        .system-prompt-hint {
+            font-size: 0.75em;
+            color: #7C3AED;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        .system-prompt-active-badge {
+            font-size: 0.7em;
+            background: linear-gradient(135deg, #9333EA 0%, #A855F7 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* === FILES LIST SECTION === */
+        .files-list-section {
+            max-height: 400px;
+        }
+
+        #filesList {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .files-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .files-count {
+            font-size: 0.85em;
+            color: #0F766E;
+            background: #D1FAE5;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-weight: 600;
+        }
+
+        .file-item {
+            padding: 16px;
+            background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #0F766E;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .file-item:hover {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+            box-shadow: 0 4px 6px -1px rgba(15, 118, 110, 0.1),
+                        0 2px 4px -1px rgba(15, 118, 110, 0.06);
+            transform: translateX(4px);
+            border-left-color: #0D9488;
+        }
+
+        .file-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .file-item-name {
+            font-weight: 600;
+            color: #0F172A;
+            font-size: 0.9em;
+            word-break: break-word;
+        }
+
+        .btn-delete-file {
+            padding: 6px 10px;
+            background: #DC2626;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            min-width: 36px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-delete-file:hover {
+            background: #B91C1C;
+            transform: translateY(-1px);
+        }
+
+        .btn-delete-file:disabled {
+            background: #94A3B8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .file-item-details {
+            font-size: 0.75em;
+            color: #64748B;
+            margin-top: 4px;
+        }
+
+        .file-item-metadata {
+            margin-top: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            font-size: 0.75em;
+            border: 1px solid #E2E8F0;
+        }
+
+        .empty-files-state {
+            text-align: center;
+            padding: 24px;
+            color: #94A3B8;
+            font-size: 0.9em;
+        }
+
+        /* === CHAT SECTION === */
+        .chat-section {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+            min-height: 600px;
+            max-height: 900px;
+        }
+
+        /* === METADATA FILTER SECTION === */
+        .metadata-filter-section {
+            margin-bottom: 14px;
+            padding: 14px;
+            background: #DBEAFE;
+            border-radius: 8px;
+            border-left: 3px solid #2563EB;
+        }
+
+        .metadata-filter-section h3 {
+            font-size: 0.9em;
+            color: #1E40AF;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .metadata-filter-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #60A5FA;
+            border-radius: 8px;
+            font-size: 0.85em;
+            background: #FFFFFF;
+            transition: border-color 0.2s ease;
+        }
+
+        .metadata-filter-input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .filter-examples {
+            font-size: 0.75em;
+            color: #64748B;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        /* === CHAT MESSAGES === */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #F8FAFC;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .message {
+            margin-bottom: 18px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+            color: white;
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 4px 6px -1px rgba(15, 118, 110, 0.25),
+                        0 2px 4px -1px rgba(15, 118, 110, 0.15);
+        }
+
+        .message.assistant .message-content {
+            background: #FFFFFF;
+            color: #111827;
+            border: 1px solid rgba(229, 231, 235, 0.9);
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06),
+                        0 2px 4px -1px rgba(0, 0, 0, 0.04);
+        }
+
+        .message-label {
+            font-size: 0.8em;
+            color: #64748B;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        /* === METADATA/CITATIONS SECTION === */
+        .metadata-section {
+            margin-top: 10px;
+            padding: 12px;
+            background: #F1F5F9;
+            border-radius: 8px;
+            font-size: 0.85em;
+        }
+
+        .metadata-toggle {
+            cursor: pointer;
+            color: #0F766E;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+            transition: color 0.2s ease;
+        }
+
+        .metadata-toggle:hover {
+            color: #0D9488;
+        }
+
+        .metadata-content {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .metadata-content.show {
+            display: block;
+        }
+
+        .citation {
+            padding: 10px;
+            margin: 8px 0;
+            background: #F8FAFC;
+            border-left: 3px solid #0F766E;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+
+        .citation-title {
+            font-weight: 600;
+            color: #0F766E;
+            margin-bottom: 6px;
+        }
+
+        .citation-text {
+            color: #475569;
+            font-style: italic;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        /* === CHAT INPUT === */
+        .chat-input-container {
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 24px;
+            border: 2px solid #E5E7EB;
+            border-radius: 14px;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #FFFFFF;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+
+        .chat-input:focus {
+            border-color: #0F766E;
+            box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12),
+                        0 4px 6px -1px rgba(15, 118, 110, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .chat-input:disabled {
+            background: #F9FAFB;
+            cursor: not-allowed;
+            border-color: #E5E7EB;
+        }
+
+        /* === PRIMARY BUTTONS === */
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(15, 118, 110, 0.3),
+                        0 2px 4px -1px rgba(15, 118, 110, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(15, 118, 110, 0.35),
+                        0 4px 6px -2px rgba(15, 118, 110, 0.25);
+        }
+
+        .btn-primary:disabled {
+            background: #D1D5DB;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748B 0%, #475569 100%);
+            color: white;
+            font-size: 0.9em;
+            padding: 12px 24px;
+            box-shadow: 0 2px 4px rgba(100, 116, 139, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(100, 116, 139, 0.3);
+        }
+
+        /* === EMPTY STATES === */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94A3B8;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 14px;
+        }
+
+        /* === SUGGESTED PROMPTS === */
+        .suggested-prompts {
+            padding: 24px;
+            text-align: center;
+        }
+
+        .suggested-prompts h3 {
+            font-size: 0.95em;
+            color: #0F766E;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .prompt-bubbles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .prompt-bubble {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+            border: 2px solid #0F766E;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.9em;
+            color: #0F766E;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(15, 118, 110, 0.08),
+                        0 1px 2px rgba(15, 118, 110, 0.04);
+        }
+
+        .prompt-bubble:hover {
+            background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+            color: white;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(15, 118, 110, 0.25),
+                        0 6px 6px rgba(15, 118, 110, 0.15);
+            border-color: #0D9488;
+        }
+
+        /* === FILE READY BANNER === */
+        .file-ready-banner {
+            padding: 18px;
+            background: #D1FAE5;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            text-align: center;
+            border-left: 4px solid #10B981;
+            animation: slideIn 0.5s ease;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+        }
+
+        .file-ready-banner strong {
+            color: #065F46;
+            font-size: 1.05em;
+        }
+
+        /* === LOADING SPINNER === */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* === CONTROLS BAR === */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .conversation-info {
+            font-size: 0.85em;
+            color: #64748B;
+            font-weight: 500;
+        }
+
+        /* === CUSTOM SCROLLBAR === */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #0F766E;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0D9488;
+        }
+
+        /* === RESPONSIVE ADJUSTMENTS === */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            header {
+                padding: 20px 16px;
+            }
+
+            header h1 {
+                font-size: 2em;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .message-content {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Gemini RAG Assistant</h1>
+            <p>Upload documents and chat with your files using AI-powered search</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Store Info -->
+                <div class="card">
+                    <h2>🗄️ File Search Store</h2>
+                    <div id="storeInfo">
+                        <div class="empty-files-state">No store created yet</div>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="card">
+                    <h2>📤 Upload Document</h2>
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-zone-icon">📁</div>
+                        <p><strong>Drag & drop</strong> your file here</p>
+                        <p style="font-size: 0.8em; margin-top: 6px;">or click to browse</p>
+                    </div>
+                    <input type="file" id="fileInput" class="file-input">
+
+                    <!-- Metadata Input -->
+                    <div class="metadata-input-section">
+                        <h3>📋 Custom Metadata</h3>
+                        <div class="metadata-fields" id="metadataFields"></div>
+                        <button class="add-metadata-btn" id="addMetadataBtn">+ Add Metadata</button>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="advanced-section">
+                        <div class="advanced-toggle" onclick="toggleAdvanced()">
+                            ⚙️ Advanced Options
+                            <span id="advancedArrow">▼</span>
+                        </div>
+                        <div class="advanced-content" id="advancedContent">
+                            <div class="chunking-checkbox">
+                                <input type="checkbox" id="chunkingEnabled">
+                                <label for="chunkingEnabled">Enable custom chunking</label>
+                            </div>
+                            <div class="chunking-input">
+                                <label>Max tokens per chunk:</label>
+                                <input type="number" id="maxTokensPerChunk" value="200" min="10" max="1000">
+                            </div>
+                            <div class="chunking-input">
+                                <label>Max overlap tokens:</label>
+                                <input type="number" id="maxOverlapTokens" value="20" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Prompt -->
+                    <div class="system-prompt-section">
+                        <div class="system-prompt-header">
+                            <div class="system-prompt-toggle" onclick="toggleSystemPrompt()">
+                                🎭 System Prompt
+                                <span id="systemPromptArrow">▼</span>
+                            </div>
+                            <label class="system-prompt-switch">
+                                <input type="checkbox" id="systemPromptEnabled">
+                                <span class="system-prompt-slider"></span>
+                            </label>
+                        </div>
+                        <div class="system-prompt-content" id="systemPromptContent">
+                            <textarea
+                                class="system-prompt-textarea"
+                                id="systemPromptText"
+                                placeholder="Enter instructions to guide AI responses (e.g., 'Be concise', 'Explain like I'm 5', 'Use technical language')..."></textarea>
+                            <div class="system-prompt-hint">💡 This prompt will be applied to all chat messages</div>
+                        </div>
+                    </div>
+
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
+
+                <!-- Files List -->
+                <div class="card files-list-section">
+                    <div class="files-list-header">
+                        <h2 style="margin: 0;">📂 Uploaded Files</h2>
+                        <span class="files-count" id="filesCount">0</span>
+                    </div>
+                    <div id="filesList">
+                        <div class="empty-files-state">No files uploaded yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Section -->
+            <div class="card chat-section">
+                <h2>💬 Chat with Your Documents</h2>
+
+                <!-- Metadata Filter -->
+                <div class="metadata-filter-section">
+                    <h3>🔍 Metadata Filter (Optional)</h3>
+                    <input
+                        type="text"
+                        class="metadata-filter-input"
+                        id="metadataFilter"
+                        placeholder='e.g., author="John Doe" OR year>2020'
+                    >
+                    <div class="filter-examples">
+                        Examples: author="John" | year>2020 | category="research"
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="conversation-info" id="conversationInfo">No messages yet</div>
+                    <button class="btn btn-secondary" id="clearBtn">Clear Chat</button>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💭</div>
+                        <p>Upload a document to start chatting</p>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <input
+                        type="text"
+                        class="chat-input"
+                        id="chatInput"
+                        placeholder="Ask a question about your document..."
+                        disabled
+                    >
+                    <button class="btn btn-primary" id="sendBtn" disabled>Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const conversationInfo = document.getElementById('conversationInfo');
+        const filesList = document.getElementById('filesList');
+        const storeInfo = document.getElementById('storeInfo');
+        const metadataFields = document.getElementById('metadataFields');
+        const addMetadataBtn = document.getElementById('addMetadataBtn');
+        const metadataFilter = document.getElementById('metadataFilter');
+
+        let fileUploaded = false;
+        let messageCount = 0;
+        let metadataCount = 0;
+
+        // Advanced options toggle
+        window.toggleAdvanced = () => {
+            const content = document.getElementById('advancedContent');
+            const arrow = document.getElementById('advancedArrow');
+            content.classList.toggle('show');
+            arrow.textContent = content.classList.contains('show') ? '▲' : '▼';
+        };
+
+        // System prompt toggle
+        window.toggleSystemPrompt = () => {
+            const content = document.getElementById('systemPromptContent');
+            const arrow = document.getElementById('systemPromptArrow');
+            content.classList.toggle('show');
+            arrow.textContent = content.classList.contains('show') ? '▲' : '▼';
+        };
+
+        // Metadata management
+        addMetadataBtn.addEventListener('click', () => {
+            const fieldId = `metadata-${metadataCount++}`;
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'metadata-field';
+            fieldDiv.id = fieldId;
+            fieldDiv.innerHTML = `
+                <input type="text" placeholder="Key" class="metadata-key">
+                <input type="text" placeholder="Value" class="metadata-value">
+                <button onclick="removeMetadataField('${fieldId}')">×</button>
+            `;
+            metadataFields.appendChild(fieldDiv);
+        });
+
+        window.removeMetadataField = (fieldId) => {
+            document.getElementById(fieldId).remove();
+        };
+
+        function getMetadata() {
+            const metadata = {};
+            const fields = metadataFields.querySelectorAll('.metadata-field');
+            fields.forEach(field => {
+                const key = field.querySelector('.metadata-key').value.trim();
+                const value = field.querySelector('.metadata-value').value.trim();
+                if (key && value) {
+                    const numValue = parseFloat(value);
+                    metadata[key] = isNaN(numValue) ? value : numValue;
+                }
+            });
+            return metadata;
+        }
+
+        function getChunkingConfig() {
+            const enabled = document.getElementById('chunkingEnabled').checked;
+            if (!enabled) return { enabled: false };
+
+            return {
+                enabled: true,
+                max_tokens_per_chunk: parseInt(document.getElementById('maxTokensPerChunk').value),
+                max_overlap_tokens: parseInt(document.getElementById('maxOverlapTokens').value)
+            };
+        }
+
+        // Drag and drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        async function handleFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('metadata', JSON.stringify(getMetadata()));
+            formData.append('chunking_config', JSON.stringify(getChunkingConfig()));
+
+            uploadStatus.className = 'upload-status loading';
+            uploadStatus.innerHTML = '<div class="spinner"></div> Uploading and processing...';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    uploadStatus.className = 'upload-status success';
+                    uploadStatus.innerHTML = `✅ ${data.message}`;
+                    fileUploaded = true;
+                    chatInput.disabled = false;
+                    sendBtn.disabled = false;
+
+                    updateFilesList(data.uploaded_files);
+                    loadStoreInfo();
+
+                    // Show file ready banner and suggested prompts
+                    showFileReadyState(data.filename);
+
+                    metadataFields.innerHTML = '';
+                    metadataCount = 0;
+                } else {
+                    uploadStatus.className = 'upload-status error';
+                    uploadStatus.innerHTML = `❌ ${data.error}`;
+                }
+            } catch (error) {
+                uploadStatus.className = 'upload-status error';
+                uploadStatus.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function loadStoreInfo() {
+            try {
+                const response = await fetch('/store-info');
+                const data = await response.json();
+
+                if (data.store_exists) {
+                    storeInfo.innerHTML = `
+                        <div class="store-info">
+                            <div class="store-info-item">
+                                <span class="store-info-label">Name:</span> ${data.display_name}
+                            </div>
+                            <div class="store-info-item">
+                                <span class="store-info-label">Documents:</span> ${data.document_count}
+                            </div>
+                            <div class="store-info-item">
+                                <span class="store-info-label">Created:</span> ${data.create_time}
+                            </div>
+                            <button class="btn-delete-store" onclick="deleteStore()">🗑️ Delete Entire Store</button>
+                        </div>
+                    `;
+                } else {
+                    storeInfo.innerHTML = '<div class="empty-files-state">No store created yet</div>';
+                }
+            } catch (error) {
+                console.error('Error loading store info:', error);
+            }
+        }
+
+        window.deleteStore = async () => {
+            if (!confirm('Are you sure you want to delete the entire file search store? This will remove all uploaded files and cannot be undone.')) return;
+
+            const deleteBtn = document.querySelector('.btn-delete-store');
+            const originalText = deleteBtn.innerHTML;
+
+            try {
+                // Show loading state
+                deleteBtn.disabled = true;
+                deleteBtn.classList.add('btn-loading');
+                deleteBtn.innerHTML = 'Deleting...';
+
+                const response = await fetch('/delete-store', { method: 'DELETE' });
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Show success in store info
+                    storeInfo.innerHTML = `
+                        <div style="padding: 15px; background: #d4edda; border-radius: 10px; border-left: 4px solid #28a745; text-align: center;">
+                            <strong style="color: #155724;">✅ Store deleted successfully!</strong>
+                        </div>
+                    `;
+
+                    // Reset state
+                    fileUploaded = false;
+                    chatInput.disabled = true;
+                    sendBtn.disabled = true;
+                    updateFilesList([]);
+                    chatMessages.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💭</div><p>Upload a document to start chatting</p></div>';
+                    messageCount = 0;
+                    updateConversationInfo();
+
+                    // Clear success message after 3 seconds
+                    setTimeout(() => {
+                        storeInfo.innerHTML = '<div class="empty-files-state">No store created yet</div>';
+                    }, 3000);
+                } else {
+                    deleteBtn.disabled = false;
+                    deleteBtn.classList.remove('btn-loading');
+                    deleteBtn.innerHTML = originalText;
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                deleteBtn.disabled = false;
+                deleteBtn.classList.remove('btn-loading');
+                deleteBtn.innerHTML = originalText;
+                alert('Error deleting store: ' + error.message);
+            }
+        };
+
+        function updateFilesList(files) {
+            // Update count badge
+            const filesCount = document.getElementById('filesCount');
+            filesCount.textContent = files ? files.length : 0;
+
+            if (!files || files.length === 0) {
+                filesList.innerHTML = '<div class="empty-files-state">No files uploaded yet</div>';
+                return;
+            }
+
+            filesList.innerHTML = files.map((file, index) => {
+                const sizeKB = (file.size / 1024).toFixed(2);
+                const metadataHTML = file.custom_metadata && Object.keys(file.custom_metadata).length > 0
+                    ? `<div class="file-item-metadata">
+                        <strong>Metadata:</strong><br>
+                        ${Object.entries(file.custom_metadata).map(([k, v]) => `${k}: ${v}`).join('<br>')}
+                       </div>`
+                    : '';
+
+                const chunkingHTML = file.chunking_config
+                    ? `<div class="file-item-metadata">
+                        <strong>Chunking:</strong> ${file.chunking_config.max_tokens_per_chunk} tokens/chunk, ${file.chunking_config.max_overlap_tokens} overlap
+                       </div>`
+                    : '';
+
+                return `
+                    <div class="file-item">
+                        <div class="file-item-header">
+                            <div class="file-item-name">📄 ${file.filename}</div>
+                            <button class="btn-delete-file" onclick="deleteFile(${index})">🗑️</button>
+                        </div>
+                        <div class="file-item-details">
+                            Size: ${sizeKB} KB | Uploaded: ${file.uploaded_at}
+                        </div>
+                        ${metadataHTML}
+                        ${chunkingHTML}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.deleteFile = async (index) => {
+            if (!confirm('Are you sure you want to delete this file?')) return;
+
+            // Find and disable the button
+            const deleteButtons = document.querySelectorAll('.btn-delete-file');
+            const deleteBtn = deleteButtons[index];
+            const originalText = deleteBtn.innerHTML;
+
+            try {
+                // Show loading state
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '⏳';
+
+                const response = await fetch(`/delete-file/${index}`, { method: 'DELETE' });
+                const data = await response.json();
+
+                if (response.ok) {
+                    updateFilesList(data.uploaded_files);
+                    loadStoreInfo();
+
+                    // Show temporary success message
+                    uploadStatus.className = 'upload-status success';
+                    uploadStatus.innerHTML = '✅ File deleted successfully';
+                    setTimeout(() => {
+                        uploadStatus.className = 'upload-status';
+                        uploadStatus.style.display = 'none';
+                    }, 3000);
+                } else {
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = originalText;
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = originalText;
+                alert('Error deleting file: ' + error.message);
+            }
+        };
+
+        function showFileReadyState(filename) {
+            const suggestedPrompts = [
+                "What is this document about?",
+                "Summarize the main points",
+                "What are the key takeaways?",
+                "List the main topics covered",
+                "Extract important information"
+            ];
+
+            chatMessages.innerHTML = `
+                <div class="file-ready-banner">
+                    <strong>✅ File "${filename}" is ready!</strong><br>
+                    <span style="font-size: 0.9em; color: #155724;">You can now ask questions about your document</span>
+                </div>
+                <div class="suggested-prompts">
+                    <h3>💡 Try asking:</h3>
+                    <div class="prompt-bubbles">
+                        ${suggestedPrompts.map(prompt => `
+                            <div class="prompt-bubble" onclick="useSuggestedPrompt('${prompt.replace(/'/g, "\\'")}')">
+                                ${prompt}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.useSuggestedPrompt = (prompt) => {
+            chatInput.value = prompt;
+            chatInput.focus();
+            // Automatically send the message
+            sendMessage();
+        };
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            const filter = metadataFilter.value.trim();
+            const systemPromptEnabled = document.getElementById('systemPromptEnabled').checked;
+            const systemPromptText = document.getElementById('systemPromptText').value.trim();
+
+            if (!message || !fileUploaded) return;
+
+            addMessage('user', message);
+            chatInput.value = '';
+            sendBtn.disabled = true;
+            chatInput.disabled = true;
+
+            try {
+                const payload = {
+                    message,
+                    metadata_filter: filter
+                };
+
+                // Add system prompt if enabled
+                if (systemPromptEnabled && systemPromptText) {
+                    payload.system_prompt = systemPromptText;
+                }
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    addMessage('assistant', data.response, data.metadata, data.metadata_filter_used);
+                    messageCount = data.conversation_length;
+                    updateConversationInfo();
+                } else {
+                    addMessage('assistant', `Error: ${data.error}`);
+                }
+            } catch (error) {
+                addMessage('assistant', `Error: ${error.message}`);
+            } finally {
+                sendBtn.disabled = false;
+                chatInput.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        function addMessage(role, content, metadata = null, filterUsed = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            let filterHTML = '';
+            if (role === 'assistant' && filterUsed) {
+                filterHTML = `<div style="font-size: 0.75em; color: #2196f3; margin-top: 5px;">🔍 Filter: ${filterUsed}</div>`;
+            }
+
+            let metadataHTML = '';
+            if (metadata && metadata.citations && metadata.citations.length > 0) {
+                const metadataId = `metadata-${Date.now()}`;
+                metadataHTML = `
+                    <div class="metadata-section">
+                        <div class="metadata-toggle" onclick="toggleMetadata('${metadataId}')">
+                            📎 ${metadata.citation_count} source${metadata.citation_count > 1 ? 's' : ''} cited
+                            <span id="${metadataId}-arrow">▼</span>
+                        </div>
+                        <div class="metadata-content" id="${metadataId}">
+                            <strong>Sources & Citations:</strong>
+                            ${metadata.citations.map((citation, index) => `
+                                <div class="citation">
+                                    <div class="citation-title">📄 Source ${index + 1}: ${citation.title || 'Untitled'}</div>
+                                    ${citation.uri ? `<div style="font-size: 0.85em; color: #999;">URI: ${citation.uri}</div>` : ''}
+                                    ${citation.text ? `<div class="citation-text">"${citation.text.substring(0, 300)}${citation.text.length > 300 ? '...' : ''}"</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            messageDiv.innerHTML = `
+                <div class="message-label">${role === 'user' ? 'You' : 'Assistant'}</div>
+                <div class="message-content">
+                    ${content}
+                    ${filterHTML}
+                    ${metadataHTML}
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        window.toggleMetadata = (id) => {
+            const content = document.getElementById(id);
+            const arrow = document.getElementById(`${id}-arrow`);
+            content.classList.toggle('show');
+            arrow.textContent = content.classList.contains('show') ? '▲' : '▼';
+        };
+
+        function updateConversationInfo() {
+            conversationInfo.textContent = `${messageCount} message${messageCount !== 1 ? 's' : ''} in conversation`;
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        clearBtn.addEventListener('click', async () => {
+            if (!confirm('Clear conversation history?')) return;
+
+            try {
+                const response = await fetch('/clear', { method: 'POST' });
+                if (response.ok) {
+                    chatMessages.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💭</div><p>Conversation cleared!</p></div>';
+                    messageCount = 0;
+                    updateConversationInfo();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        // Load initial state
+        async function loadInitialState() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                if (data.file_uploaded) {
+                    fileUploaded = true;
+                    chatInput.disabled = false;
+                    sendBtn.disabled = false;
+                    uploadStatus.className = 'upload-status success';
+                    uploadStatus.innerHTML = '✅ File already uploaded';
+
+                    // Show file ready state if there are uploaded files
+                    if (data.uploaded_files && data.uploaded_files.length > 0) {
+                        const latestFile = data.uploaded_files[data.uploaded_files.length - 1];
+                        showFileReadyState(latestFile.filename);
+                    }
+                }
+
+                if (data.uploaded_files) updateFilesList(data.uploaded_files);
+                if (data.conversation_length) {
+                    messageCount = data.conversation_length;
+                    updateConversationInfo();
+                }
+
+                loadStoreInfo();
+            } catch (error) {
+                console.error('Error loading state:', error);
+            }
+        }
+
+        loadInitialState();
+    </script>
+</body>
+</html>
