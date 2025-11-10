@@ -22,10 +22,15 @@ The Gemini RAG File Search Application is a powerful, user-friendly tool that en
 ### What Makes This Special?
 
 - **Fully Managed RAG**: No need to manage vector databases, embeddings, or chunking strategies - Gemini handles it all
+- **State Persistence**: Files and store information survive server restarts automatically
+- **API Documentation Tab**: Ready-to-copy cURL commands and API integration examples
+- **Markdown-Formatted Responses**: Beautiful formatting with proper paragraphs, lists, code blocks, and styling
 - **Rich Metadata Support**: Tag documents with custom metadata and filter searches accordingly
 - **Configurable Chunking**: Fine-tune how documents are split for optimal retrieval
 - **Built-in Citations**: Every AI response includes source citations for verification
 - **System Prompts**: Customize AI behavior with custom instructions
+- **API Key Management**: Update your API key directly from the UI
+- **Loading Indicators**: Visual feedback with animated typing dots while AI processes
 - **Beautiful UI**: Clean, professional design with drag-and-drop functionality
 - **Cost Effective**: Free storage, pay only for initial indexing ($0.15 per 1M tokens)
 
@@ -45,6 +50,8 @@ The Gemini RAG File Search Application is a powerful, user-friendly tool that en
 #### 💬 **Intelligent Chat Interface**
 - **Context-Aware Conversations**: Maintains conversation history (last 7 messages) for coherent dialogues
 - **Semantic Search**: Powered by Gemini's state-of-the-art embedding model
+- **Markdown-Formatted Responses**: Beautiful formatting with paragraphs, lists, bold, italic, code blocks, headers, and blockquotes
+- **Loading Animation**: Animated typing indicator shows when AI is processing your question
 - **Instant Responses**: Fast query processing with efficient retrieval
 - **Suggested Prompts**: Smart prompt suggestions when files are uploaded
 - **Clear Chat History**: Easy conversation reset without losing uploaded files
@@ -81,10 +88,19 @@ The Gemini RAG File Search Application is a powerful, user-friendly tool that en
 
 #### 📁 **File Management**
 - **Multi-File Support**: Upload and manage multiple documents
+- **State Persistence**: Files and store information automatically persist across server restarts
 - **File Details**: View filename, size, upload timestamp
 - **Individual Deletion**: Remove specific files from the store
 - **Store Management**: Delete entire file search store when needed
 - **Metadata Display**: See custom metadata and chunking config for each file
+
+#### 🔌 **API Documentation & Integration**
+- **Built-in API Docs**: Dedicated tab showing how to integrate via API
+- **Ready-to-Copy cURL Commands**: Pre-populated with your API key and store name
+- **Python SDK Examples**: Complete code examples for direct integration
+- **n8n Compatible**: HTTP examples work directly in workflow automation tools
+- **API Key Management**: Update your Gemini API key directly from the UI without editing files
+- **Live Documentation**: API examples update automatically when you upload files
 
 ### User Interface
 
@@ -155,7 +171,7 @@ pip install -r requirements.txt
 This will install:
 - Flask 3.0.0 (web framework)
 - Flask-CORS 4.0.0 (CORS handling)
-- google-genai 0.2.2 (Gemini API client)
+- google-genai >=1.49.0 (Gemini API client)
 - python-dotenv 1.0.0 (environment variables)
 - werkzeug 3.0.1 (secure file handling)
 
@@ -875,6 +891,11 @@ SOFTWARE.
 - [x] File upload with drag & drop
 - [x] Multi-format document support
 - [x] AI-powered chat with citations
+- [x] Markdown-formatted responses
+- [x] Loading indicators
+- [x] State persistence across restarts
+- [x] API documentation tab
+- [x] API key management from UI
 - [x] Custom metadata and filtering
 - [x] Configurable chunking
 - [x] System prompts

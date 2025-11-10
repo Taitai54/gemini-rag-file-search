@@ -42,6 +42,42 @@ conversation_history = []
 file_search_store = None
 uploaded_files = []  # Track uploaded files with metadata and document IDs
 MAX_HISTORY = 7
+PERSISTENCE_FILE = 'store_state.json'
+
+# Load persisted state on startup
+def load_state():
+    global file_search_store, uploaded_files
+    try:
+        if os.path.exists(PERSISTENCE_FILE):
+            with open(PERSISTENCE_FILE, 'r') as f:
+                state = json.load(f)
+                store_name = state.get('store_name')
+                uploaded_files = state.get('uploaded_files', [])
+
+                if store_name:
+                    # Verify the store still exists
+                    try:
+                        file_search_store = client.file_search_stores.get(name=store_name)
+                        logger.info(f"Restored file search store: {store_name} with {len(uploaded_files)} files")
+                    except Exception as e:
+                        logger.warning(f"Stored file search store not found: {e}")
+                        file_search_store = None
+                        uploaded_files = []
+    except Exception as e:
+        logger.error(f"Error loading state: {e}")
+
+# Save state to file
+def save_state():
+    try:
+        state = {
+            'store_name': file_search_store.name if file_search_store else None,
+            'uploaded_files': uploaded_files
+        }
+        with open(PERSISTENCE_FILE, 'w') as f:
+            json.dump(state, f, indent=2)
+        logger.info("State saved successfully")
+    except Exception as e:
+        logger.error(f"Error saving state: {e}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -130,15 +166,18 @@ def upload_file():
 
         # Wait for operation to complete
         logger.info("Waiting for file import to complete")
-        max_wait = 60
+        max_wait = 120  # Increased to 2 minutes
         wait_time = 0
         while not operation.done and wait_time < max_wait:
-            time.sleep(2)
+            time.sleep(3)
             operation = client.operations.get(operation)
-            wait_time += 2
+            wait_time += 3
+            if wait_time % 15 == 0:  # Log progress every 15 seconds
+                logger.info(f"Still waiting... ({wait_time}s elapsed)")
 
         if not operation.done:
-            return jsonify({'error': 'File processing timeout'}), 500
+            logger.error(f"File processing timeout after {max_wait}s")
+            return jsonify({'error': f'File processing timeout after {max_wait} seconds. The file may still be processing in the background.'}), 500
 
         # Extract document ID from operation response
         document_id = None
@@ -157,6 +196,9 @@ def upload_file():
             'document_id': document_id
         }
         uploaded_files.append(file_info)
+
+        # Save state to persistence
+        save_state()
 
         # Clean up local file
         os.remove(filepath)
@@ -326,6 +368,9 @@ def delete_file(file_index):
         deleted_file = uploaded_files.pop(file_index)
         logger.info(f"Removed file from tracking: {deleted_file['filename']}")
 
+        # Save state to persistence
+        save_state()
+
         return jsonify({
             'success': True,
             'message': f"File '{deleted_file['filename']}' deleted successfully",
@@ -404,6 +449,9 @@ def delete_store():
         file_search_store = None
         uploaded_files = []
 
+        # Save state to persistence
+        save_state()
+
         return jsonify({
             'success': True,
             'message': 'File search store deleted successfully'
@@ -437,5 +485,81 @@ def status():
         'uploaded_files': uploaded_files
     })
 
+@app.route('/api-info', methods=['GET'])
+def get_api_info():
+    """Return API information for documentation tab"""
+    try:
+        api_info = {
+            'success': True,
+            'api_key': api_key,
+            'store_exists': file_search_store is not None,
+            'store_name': file_search_store.name if file_search_store else None,
+            'store_display_name': getattr(file_search_store, 'display_name', 'RAG-App-Store') if file_search_store else 'RAG-App-Store',
+            'file_count': len(uploaded_files),
+            'files': uploaded_files,
+            'model': 'gemini-2.5-flash',
+            'example_metadata_filters': []
+        }
+
+        # Collect example metadata keys from uploaded files
+        metadata_keys = set()
+        for file_info in uploaded_files:
+            if file_info.get('custom_metadata'):
+                for key in file_info['custom_metadata'].keys():
+                    metadata_keys.add(key)
+
+        api_info['metadata_keys'] = list(metadata_keys)
+
+        return jsonify(api_info)
+
+    except Exception as e:
+        logger.error(f"Error getting API info: {str(e)}")
+        return jsonify({'error': f'Error getting API info: {str(e)}'}), 500
+
+@app.route('/update-api-key', methods=['POST'])
+def update_api_key():
+    """Update API key in .env file and reinitialize client"""
+    global api_key, client
+    try:
+        data = request.json
+        new_api_key = data.get('api_key', '').strip()
+
+        if not new_api_key:
+            return jsonify({'error': 'API key cannot be empty'}), 400
+
+        # Update .env file
+        env_path = '.env'
+        if os.path.exists(env_path):
+            with open(env_path, 'r') as f:
+                lines = f.readlines()
+
+            with open(env_path, 'w') as f:
+                found = False
+                for line in lines:
+                    if line.startswith('GEMINI_API_KEY='):
+                        f.write(f'GEMINI_API_KEY={new_api_key}\n')
+                        found = True
+                    else:
+                        f.write(line)
+
+                if not found:
+                    f.write(f'\nGEMINI_API_KEY={new_api_key}\n')
+        else:
+            with open(env_path, 'w') as f:
+                f.write(f'GEMINI_API_KEY={new_api_key}\n')
+
+        # Update runtime variable and reinitialize client
+        api_key = new_api_key
+        client = genai.Client(api_key=api_key)
+
+        logger.info("API key updated successfully")
+        return jsonify({'success': True, 'message': 'API key updated successfully. Please reload the page.'})
+
+    except Exception as e:
+        logger.error(f"Error updating API key: {str(e)}")
+        return jsonify({'error': f'Error updating API key: {str(e)}'}), 500
+
 if __name__ == '__main__':
+    # Load persisted state on startup
+    load_state()
     app.run(debug=True, host='localhost', port=5001)

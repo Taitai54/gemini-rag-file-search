@@ -71,6 +71,7 @@ uploads/
 *.log
 .DS_Store
 Thumbs.db
+store_state.json
 
 # IDEs
 .vscode/

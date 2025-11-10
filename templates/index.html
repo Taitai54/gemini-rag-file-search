@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gemini RAG - File Search Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         /* ==========================================
            MODERN GEMINI RAG ASSISTANT UI
@@ -38,13 +39,63 @@
         /* === HEADER SECTION === */
         header {
             text-align: center;
-            margin-bottom: 48px;
+            margin-bottom: 24px;
             padding: 48px 32px;
             background: #FFFFFF;
             border-radius: 20px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
                         0 2px 4px -1px rgba(0, 0, 0, 0.03);
             border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+
+        /* === TAB NAVIGATION === */
+        .tab-navigation {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                        0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 16px 24px;
+            border: none;
+            background: transparent;
+            color: #6B7280;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background: #F3F4F6;
+            color: #374151;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+            color: white;
+            box-shadow: 0 4px 8px rgba(15, 118, 110, 0.2);
+        }
+
+        /* === TAB CONTENT === */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         header h1 {
@@ -643,25 +694,30 @@
             font-weight: 600;
             color: #0F172A;
             font-size: 0.9em;
-            word-break: break-word;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            max-width: 85%;
+            line-height: 1.4;
         }
 
         .btn-delete-file {
-            padding: 6px 10px;
-            background: #DC2626;
+            padding: 8px 12px;
+            background: #EF4444;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 0.8em;
+            font-size: 1em;
             font-weight: 600;
-            min-width: 36px;
+            min-width: 40px;
             transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
         .btn-delete-file:hover {
-            background: #B91C1C;
-            transform: translateY(-1px);
+            background: #DC2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
         }
 
         .btn-delete-file:disabled {
@@ -796,6 +852,114 @@
             border-bottom-left-radius: 6px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06),
                         0 2px 4px -1px rgba(0, 0, 0, 0.04);
+        }
+
+        /* === MARKDOWN FORMATTING IN MESSAGES === */
+        .message-content p {
+            margin: 0 0 12px 0;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content ul, .message-content ol {
+            margin: 8px 0 12px 20px;
+            padding-left: 0;
+        }
+
+        .message-content li {
+            margin: 4px 0;
+        }
+
+        .message-content strong {
+            font-weight: 700;
+            color: #0F766E;
+        }
+
+        .message-content em {
+            font-style: italic;
+        }
+
+        .message-content code {
+            background: #F3F4F6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .message-content pre {
+            background: #1F2937;
+            color: #F3F4F6;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+            color: #F3F4F6;
+        }
+
+        .message-content h1, .message-content h2, .message-content h3 {
+            margin: 16px 0 8px 0;
+            color: #0F766E;
+        }
+
+        .message-content h1 { font-size: 1.4em; }
+        .message-content h2 { font-size: 1.2em; }
+        .message-content h3 { font-size: 1.1em; }
+
+        .message-content blockquote {
+            border-left: 4px solid #0F766E;
+            padding-left: 12px;
+            margin: 12px 0;
+            color: #6B7280;
+            font-style: italic;
+        }
+
+        /* === LOADING INDICATOR === */
+        .message.loading .message-content {
+            background: #F3F4F6;
+            border: 1px solid #E5E7EB;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 0;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background: #0F766E;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
         }
 
         .message-label {
@@ -1084,6 +1248,190 @@
             background: #0D9488;
         }
 
+        /* === API DOCUMENTATION STYLES === */
+        .api-docs-container {
+            display: grid;
+            gap: 24px;
+        }
+
+        .api-section {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                        0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+
+        .api-section h2 {
+            color: #0F766E;
+            margin-bottom: 16px;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .api-section h3 {
+            color: #374151;
+            margin: 24px 0 12px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .api-section p {
+            color: #6B7280;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+
+        .api-info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .api-info-card {
+            background: #F9FAFB;
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid #0F766E;
+            min-width: 0;
+        }
+
+        .api-info-card strong {
+            display: block;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .api-info-card .value {
+            color: #0F766E;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.85em;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .code-block-container {
+            position: relative;
+            margin: 16px 0 24px 0;
+        }
+
+        .code-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1F2937;
+            padding: 12px 16px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .code-language {
+            color: #9CA3AF;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .copy-btn {
+            background: #374151;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn:hover {
+            background: #0F766E;
+        }
+
+        .copy-btn.copied {
+            background: #10B981;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #F3F4F6;
+            padding: 20px;
+            border-radius: 0 0 12px 12px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .code-comment {
+            color: #9CA3AF;
+        }
+
+        .code-string {
+            color: #34D399;
+        }
+
+        .code-keyword {
+            color: #60A5FA;
+        }
+
+        .code-function {
+            color: #FBBF24;
+        }
+
+        .warning-banner {
+            background: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .warning-banner strong {
+            color: #92400E;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .warning-banner p {
+            color: #78350F;
+            margin: 0;
+            font-size: 0.95em;
+        }
+
+        .example-section {
+            margin: 24px 0;
+        }
+
+        .no-store-message {
+            text-align: center;
+            padding: 48px 24px;
+            color: #6B7280;
+        }
+
+        .no-store-message h3 {
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
         /* === RESPONSIVE ADJUSTMENTS === */
         @media (max-width: 768px) {
             body {
@@ -1105,6 +1453,18 @@
             .message-content {
                 max-width: 90%;
             }
+
+            .tab-navigation {
+                flex-direction: column;
+            }
+
+            .api-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .code-block {
+                font-size: 0.8em;
+            }
         }
     </style>
 </head>
@@ -1115,6 +1475,18 @@
             <p>Upload documents and chat with your files using AI-powered search</p>
         </header>
 
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('application')">
+                📚 Application
+            </button>
+            <button class="tab-btn" onclick="switchTab('api-docs')">
+                🔌 API Documentation
+            </button>
+        </div>
+
+        <!-- Application Tab Content -->
+        <div id="application-tab" class="tab-content active">
         <div class="main-content">
             <!-- Sidebar -->
             <div class="sidebar">
@@ -1243,6 +1615,19 @@
                 </div>
             </div>
         </div>
+        </div>
+        <!-- End Application Tab -->
+
+        <!-- API Documentation Tab -->
+        <div id="api-docs-tab" class="tab-content">
+            <div class="api-docs-container" id="apiDocsContainer">
+                <div class="no-store-message">
+                    <h3>Loading API Documentation...</h3>
+                    <p>Please wait while we fetch your API information.</p>
+                </div>
+            </div>
+        </div>
+        <!-- End API Documentation Tab -->
     </div>
 
     <script>
@@ -1365,6 +1750,9 @@
 
                     updateFilesList(data.uploaded_files);
                     loadStoreInfo();
+
+                    // Clear API docs cache so it refreshes with new file info
+                    apiInfoCache = null;
 
                     // Show file ready banner and suggested prompts
                     showFileReadyState(data.filename);
@@ -1586,6 +1974,23 @@
             sendBtn.disabled = true;
             chatInput.disabled = true;
 
+            // Show loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message assistant loading';
+            loadingDiv.id = 'loading-message';
+            loadingDiv.innerHTML = `
+                <div class="message-label">Assistant</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
             try {
                 const payload = {
                     message,
@@ -1605,6 +2010,10 @@
 
                 const data = await response.json();
 
+                // Remove loading indicator
+                const loading = document.getElementById('loading-message');
+                if (loading) loading.remove();
+
                 if (response.ok) {
                     addMessage('assistant', data.response, data.metadata, data.metadata_filter_used);
                     messageCount = data.conversation_length;
@@ -1613,6 +2022,10 @@
                     addMessage('assistant', `Error: ${data.error}`);
                 }
             } catch (error) {
+                // Remove loading indicator
+                const loading = document.getElementById('loading-message');
+                if (loading) loading.remove();
+
                 addMessage('assistant', `Error: ${error.message}`);
             } finally {
                 sendBtn.disabled = false;
@@ -1653,10 +2066,15 @@
                 `;
             }
 
+            // Convert markdown to HTML for assistant messages
+            const formattedContent = role === 'assistant' && typeof marked !== 'undefined'
+                ? marked.parse(content)
+                : content;
+
             messageDiv.innerHTML = `
                 <div class="message-label">${role === 'user' ? 'You' : 'Assistant'}</div>
                 <div class="message-content">
-                    ${content}
+                    ${formattedContent}
                     ${filterHTML}
                     ${metadataHTML}
                 </div>
@@ -1730,6 +2148,488 @@
         }
 
         loadInitialState();
+
+        // ==========================================
+        // TAB SWITCHING & API DOCUMENTATION
+        // ==========================================
+
+        let apiInfoCache = null;
+
+        // Tab switching function
+        window.switchTab = function(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            const selectedTab = document.getElementById(`${tabName}-tab`);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Load API documentation if API docs tab is clicked
+            if (tabName === 'api-docs' && !apiInfoCache) {
+                loadApiDocumentation();
+            }
+        };
+
+        // Load API information and generate documentation
+        async function loadApiDocumentation() {
+            const container = document.getElementById('apiDocsContainer');
+
+            try {
+                const response = await fetch('/api-info');
+                const data = await response.json();
+                apiInfoCache = data;
+
+                if (!data.store_exists) {
+                    container.innerHTML = `
+                        <div class="no-store-message">
+                            <h3>📦 No File Search Store Yet</h3>
+                            <p>Upload a document in the Application tab to create a file search store, then return here to see how to access it via API.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Generate API documentation HTML
+                container.innerHTML = generateApiDocumentation(data);
+
+                // Attach copy button listeners
+                attachCopyListeners();
+
+            } catch (error) {
+                console.error('Error loading API info:', error);
+                container.innerHTML = `
+                    <div class="no-store-message">
+                        <h3>⚠️ Error Loading API Information</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Generate API documentation HTML
+        function generateApiDocumentation(data) {
+            const metadataFilterExample = data.metadata_keys && data.metadata_keys.length > 0
+                ? `metadata_filter='${data.metadata_keys[0]}="example value"'`
+                : `metadata_filter='category="research"'`;
+
+            return `
+                <!-- Overview Section -->
+                <div class="api-section">
+                    <h2>🔌 API Access Overview</h2>
+                    <p>Your file search store is now accessible via the Gemini API. Use the information below to integrate RAG capabilities into your applications.</p>
+
+                    <div class="warning-banner">
+                        <strong>⚠️ Security Notice</strong>
+                        <p>Keep your API key secure. Never commit it to version control or expose it in client-side code.</p>
+                    </div>
+
+                    <div class="api-info-grid">
+                        <div class="api-info-card">
+                            <strong>🔑 API Key</strong>
+                            <div class="value">${data.api_key}</div>
+                        </div>
+                        <div class="api-info-card">
+                            <strong>🗄️ Store Name</strong>
+                            <div class="value">${data.store_name || 'N/A'}</div>
+                        </div>
+                        <div class="api-info-card">
+                            <strong>📊 Model</strong>
+                            <div class="value">${data.model}</div>
+                        </div>
+                        <div class="api-info-card">
+                            <strong>📁 Files in Store</strong>
+                            <div class="value">${data.file_count}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 16px; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
+                        <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 1em;">🔄 Update API Key</h3>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <input
+                                type="text"
+                                id="newApiKeyInput"
+                                placeholder="Enter new API key..."
+                                style="flex: 1; padding: 10px; border: 1px solid #D1D5DB; border-radius: 6px; font-family: Monaco, monospace; font-size: 0.9em;"
+                            />
+                            <button
+                                onclick="updateApiKey()"
+                                class="btn btn-primary"
+                                style="padding: 10px 20px; white-space: nowrap;"
+                            >
+                                Update Key
+                            </button>
+                        </div>
+                        <p style="margin: 8px 0 0 0; font-size: 0.85em; color: #6B7280;">
+                            Changes will be saved to your .env file and take effect immediately.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- HTTP/cURL Quick Start Section -->
+                <div class="api-section">
+                    <h2>⚡ Quick Start: HTTP Request (cURL)</h2>
+                    <p>Copy and paste this cURL command to query your documents directly. Works with n8n, Postman, or any HTTP client!</p>
+
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">cURL</span>
+                            <button class="copy-btn" data-copy-target="curl-quick-start">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="curl-quick-start">
+<pre>curl -X POST "https://generativelanguage.googleapis.com/v1beta/models/${data.model}:generateContent?key=${data.api_key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "contents": [{
+      "parts": [{
+        "text": "What are the main topics covered in these documents?"
+      }]
+    }],
+    "tools": [{
+      "fileSearch": {
+        "fileSearchStoreNames": ["${data.store_name}"]
+      }
+    }]
+  }'</pre>
+                        </div>
+                    </div>
+                    <p style="margin-top: 16px; font-size: 0.95em; color: #6B7280;">
+                        <strong>💡 Pro Tip:</strong> Change the "text" field to ask any question about your uploaded documents. The response will include citations showing which parts of your files were used to answer.
+                    </p>
+                </div>
+
+                <!-- Python Quick Start Section -->
+                <div class="api-section">
+                    <h2>🚀 Python SDK: Query Your Documents</h2>
+                    <p>Use the official Python SDK for more advanced features and easier integration.</p>
+
+                    <h3>Python (google-genai SDK)</h3>
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">Python</span>
+                            <button class="copy-btn" data-copy-target="python-query">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="python-query">
+<pre>from google import genai
+from google.genai import types
+
+# Initialize client
+client = genai.Client(api_key="${data.api_key}")
+
+# Query your documents
+response = client.models.generate_content(
+    model="${data.model}",
+    contents="What are the main topics covered in these documents?",
+    config=types.GenerateContentConfig(
+        tools=[types.Tool(
+            file_search=types.FileSearch(
+                file_search_store_names=["${data.store_name}"]
+            )
+        )]
+    )
+)
+
+# Get response
+print(response.text)
+
+# Access citations (grounding metadata)
+if response.candidates[0].grounding_metadata:
+    grounding = response.candidates[0].grounding_metadata
+    print("\\nSources used:")
+    for chunk in grounding.grounding_chunks:
+        if hasattr(chunk, 'retrieved_context'):
+            print(f"  - {chunk.retrieved_context.title}")
+</pre>
+                        </div>
+                    </div>
+
+                    <h3>cURL (Raw HTTP)</h3>
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">Bash</span>
+                            <button class="copy-btn" data-copy-target="curl-query">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="curl-query">
+<pre>curl -X POST "https://generativelanguage.googleapis.com/v1beta/models/${data.model}:generateContent?key=${data.api_key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "contents": [{
+      "parts": [{
+        "text": "What are the main topics covered in these documents?"
+      }]
+    }],
+    "tools": [{
+      "fileSearch": {
+        "fileSearchStoreNames": ["${data.store_name}"]
+      }
+    }]
+  }'
+</pre>
+                        </div>
+                    </div>
+                </div>
+
+                ${data.metadata_keys && data.metadata_keys.length > 0 ? `
+                <!-- Metadata Filtering Section -->
+                <div class="api-section">
+                    <h2>🔍 Query with Metadata Filtering</h2>
+                    <p>Filter which documents to search based on the custom metadata you added during upload.</p>
+                    <p><strong>Available metadata keys in your store:</strong> ${data.metadata_keys.join(', ')}</p>
+
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">Python</span>
+                            <button class="copy-btn" data-copy-target="python-metadata">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="python-metadata">
+<pre>response = client.models.generate_content(
+    model="${data.model}",
+    contents="Your question here",
+    config=types.GenerateContentConfig(
+        tools=[types.Tool(
+            file_search=types.FileSearch(
+                file_search_store_names=["${data.store_name}"],
+                ${metadataFilterExample}
+            )
+        )]
+    )
+)
+</pre>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Upload New Documents Section -->
+                <div class="api-section">
+                    <h2>📤 Upload New Documents via API</h2>
+                    <p>Add more documents to your file search store programmatically.</p>
+
+                    <h3>Step 1: Upload File to Files API</h3>
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">Python</span>
+                            <button class="copy-btn" data-copy-target="python-upload">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="python-upload">
+<pre>import time
+
+# Upload file to Files API
+uploaded_file = client.files.upload(
+    file='path/to/your/document.pdf',
+    config={'display_name': 'My Document'}
+)
+
+print(f"Uploaded: {uploaded_file.name}")
+</pre>
+                        </div>
+                    </div>
+
+                    <h3>Step 2: Import into File Search Store</h3>
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">Python</span>
+                            <button class="copy-btn" data-copy-target="python-import">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="python-import">
+<pre># Import file into your store
+operation = client.file_search_stores.import_file(
+    file_search_store_name="${data.store_name}",
+    file_name=uploaded_file.name,
+    config={
+        'custom_metadata': [
+            {"key": "author", "string_value": "John Doe"},
+            {"key": "year", "numeric_value": 2024}
+        ],
+        'chunking_config': {
+            'white_space_config': {
+                'max_tokens_per_chunk': 200,
+                'max_overlap_tokens': 20
+            }
+        }
+    }
+)
+
+# Wait for processing
+while not operation.done:
+    time.sleep(2)
+    operation = client.operations.get(operation)
+
+print("Import complete!")
+</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create New Store Section -->
+                <div class="api-section">
+                    <h2>🗄️ Create a New File Search Store</h2>
+                    <p>Create additional stores for different document collections or projects.</p>
+
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">Python</span>
+                            <button class="copy-btn" data-copy-target="python-create-store">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="python-create-store">
+<pre># Create a new file search store
+new_store = client.file_search_stores.create(
+    config={'display_name': 'My-Project-Store'}
+)
+
+print(f"Store created: {new_store.name}")
+
+# List all your stores
+for store in client.file_search_stores.list():
+    print(f"  - {store.display_name}: {store.name}")
+</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Installation Section -->
+                <div class="api-section">
+                    <h2>📦 Installation & Setup</h2>
+
+                    <h3>Install the Google Generative AI SDK</h3>
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">Bash</span>
+                            <button class="copy-btn" data-copy-target="install-sdk">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="install-sdk">
+<pre>pip install google-genai</pre>
+                        </div>
+                    </div>
+
+                    <h3>Environment Setup</h3>
+                    <div class="code-block-container">
+                        <div class="code-block-header">
+                            <span class="code-language">Python</span>
+                            <button class="copy-btn" data-copy-target="env-setup">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="code-block" id="env-setup">
+<pre>import os
+from google import genai
+
+# Set API key as environment variable (recommended)
+os.environ['GEMINI_API_KEY'] = '${data.api_key}'
+
+# Or pass directly to client
+client = genai.Client(api_key='${data.api_key}')
+</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resources Section -->
+                <div class="api-section">
+                    <h2>📚 Additional Resources</h2>
+                    <ul style="color: #6B7280; line-height: 2;">
+                        <li><strong>Official Documentation:</strong> <a href="https://ai.google.dev/gemini-api/docs/file-search" target="_blank" style="color: #0F766E;">Gemini File Search Guide</a></li>
+                        <li><strong>API Reference:</strong> <a href="https://ai.google.dev/api" target="_blank" style="color: #0F766E;">Gemini API Reference</a></li>
+                        <li><strong>Python SDK:</strong> <a href="https://github.com/google/generative-ai-python" target="_blank" style="color: #0F766E;">google-genai on GitHub</a></li>
+                        <li><strong>Rate Limits:</strong> Free tier: 1 GB storage | Paid tiers: 10 GB - 1 TB</li>
+                        <li><strong>Supported Formats:</strong> 100+ file types including PDF, DOCX, TXT, JSON, code files</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Attach copy button event listeners
+        function attachCopyListeners() {
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-copy-target');
+                    const codeBlock = document.getElementById(targetId);
+                    const textToCopy = codeBlock.textContent.trim();
+
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '✅ Copied!';
+                        this.classList.add('copied');
+
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.classList.remove('copied');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy:', err);
+                        alert('Failed to copy to clipboard');
+                    });
+                });
+            });
+        }
+
+        // Update API key function
+        window.updateApiKey = async function() {
+            const input = document.getElementById('newApiKeyInput');
+            const newApiKey = input.value.trim();
+
+            if (!newApiKey) {
+                alert('Please enter an API key');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to update your API key? This will modify your .env file.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/update-api-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ api_key: newApiKey })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('✅ ' + data.message);
+                    input.value = '';
+                    // Clear cache and reload
+                    apiInfoCache = null;
+                    window.location.reload();
+                } else {
+                    alert('❌ Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error updating API key:', error);
+                alert('❌ Failed to update API key: ' + error.message);
+            }
+        };
+
     </script>
 </body>
 </html>
