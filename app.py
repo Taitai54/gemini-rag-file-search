@@ -8,6 +8,7 @@ import json
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import logging
+import requests  # used for contacting MCP/Contact 7 knowledge base
 
 # Load environment variables
 load_dotenv()
@@ -199,6 +200,9 @@ def upload_file():
 
         # Save state to persistence
         save_state()
+
+        # notify MCP/Contact 7 server that a new document was added
+        notify_mcp_new_file(file_info)
 
         # Clean up local file
         os.remove(filepath)
@@ -558,6 +562,23 @@ def update_api_key():
     except Exception as e:
         logger.error(f"Error updating API key: {str(e)}")
         return jsonify({'error': f'Error updating API key: {str(e)}'}), 500
+
+
+# ---------------------------------------------------------------------------
+# Simple MCP / Contact 7 webhook receiver
+# ---------------------------------------------------------------------------
+@app.route('/mcp/webhook', methods=['POST'])
+def mcp_webhook():
+    """Endpoint that Contact 7 can post to when certain events occur.
+
+    You could extend this to automatically ingest documents, apply
+    metadata, or trigger notifications in the app when external workflows
+    fire. The current implementation simply logs the payload.
+    """
+    data = request.json or {}
+    logger.info(f"Received MCP webhook event: {data}")
+    # TODO: implement custom handling based on event type
+    return jsonify({'success': True}), 200
 
 if __name__ == '__main__':
     # Load persisted state on startup

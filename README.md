@@ -102,6 +102,21 @@ The Gemini RAG File Search Application is a powerful, user-friendly tool that en
 - **API Key Management**: Update your Gemini API key directly from the UI without editing files
 - **Live Documentation**: API examples update automatically when you upload files
 
+#### 🤝 **Contact 7 / MCP Integration**
+- **External Knowledge Base**: Use Contact 7 MCP to harness up-to-date documentation, trigger automations, or connect to other apps.
+- **Webhook Receiver**: The app exposes `/mcp/webhook` so external systems can notify it (e.g. when a new file is available).
+- **Outgoing Notifications**: Configure `MCP_SERVER_URL` and `MCP_API_KEY` to have the server call out when documents are uploaded.
+- **Sample Python Hook**: See `app.notify_mcp_new_file()` for a minimal example of posting events to the MCP server.
+- **Use Cases**: Automatic Slack/email alerts, ingesting attachments from Gmail, syncing metadata with Notion or Google Sheets via MCP.
+- **Configuration**: Set environment variables in `.env`:
+
+```env
+MCP_SERVER_URL=https://your-contact7-mcp.example.com/events
+MCP_API_KEY=xxxxx-your-token-xxxxx
+```
+
+Install `requests` (added to `requirements.txt`) and restart the server after updating `.env`.
+
 ### User Interface
 
 #### Design Philosophy
